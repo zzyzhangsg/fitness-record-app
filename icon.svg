@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="健身记录">
+  <rect width="128" height="128" rx="22" fill="#153f32"/>
+  <path d="M27 76h10V52H27v24Zm64 0h10V52H91v24ZM43 84h10V44H43v40Zm32 0h10V44H75v40ZM56 70h16V58H56v12Z" fill="#f7f4ed"/>
+  <path d="M28 96h72" stroke="#d99b32" stroke-width="8" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#153f32">
+  <title>健身记录</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20260617-25">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">
+        <img src="icon.svg" alt="">
+      </div>
+      <div>
+        <h1>健身记录</h1>
+        <p id="saveState">已自动保存</p>
+      </div>
+      <button class="icon-button" id="installButton" type="button" title="安装到手机桌面" hidden>
+        <span aria-hidden="true">+</span>
+      </button>
+    </header>
+
+    <main>
+      <section class="summary-panel">
+        <label class="field">
+          <span>日期</span>
+          <div class="date-row">
+            <input id="recordDate" type="date">
+            <span id="weekdayLabel" class="weekday-label">周三</span>
+          </div>
+        </label>
+        <label class="field">
+          <span>训练类型</span>
+          <select id="sessionType">
+            <option value="胸肩">胸肩</option>
+            <option value="背手臂">背手臂</option>
+            <option value="腿臀">腿臀</option>
+            <option value="全身">全身</option>
+            <option value="有氧">有氧</option>
+            <option value="休息恢复">休息恢复</option>
+          </select>
+        </label>
+        <label class="field compact">
+          <span>体重 kg</span>
+          <input id="bodyWeight" inputmode="decimal" placeholder="72">
+        </label>
+        <div class="total-tile">
+          <span>总量 千克</span>
+          <strong id="dailyVolume">0</strong>
+        </div>
+      </section>
+
+      <section class="quick-panel">
+        <div class="section-title">
+          <h2>快捷添加</h2>
+          <div class="actions">
+            <button id="editQuickActions" class="text-button" type="button">编辑</button>
+            <button id="addCustomExercise" class="text-button" type="button">自定义</button>
+          </div>
+        </div>
+        <div class="template-tabs" role="tablist" aria-label="训练模板">
+          <button class="template-tab active" data-template="push" type="button">胸肩</button>
+          <button class="template-tab" data-template="pull" type="button">背臂</button>
+          <button class="template-tab" data-template="legs" type="button">腿臀</button>
+          <button class="template-tab" data-template="cardio" type="button">有氧</button>
+        </div>
+        <div id="quickExercises" class="quick-grid"></div>
+      </section>
+
+      <section class="record-panel">
+        <div class="section-title">
+          <h2>今日训练</h2>
+          <button id="clearDay" class="danger-button" type="button">清空</button>
+        </div>
+        <div id="exerciseList" class="exercise-list"></div>
+        <div id="emptyState" class="empty-state">
+          <img src="icon.svg" alt="">
+          <p>点上面的动作开始记录。</p>
+        </div>
+      </section>
+
+      <section class="day-total-panel">
+        <div class="section-title">
+          <h2>总计</h2>
+        </div>
+        <div class="day-total-grid">
+          <div class="day-total-item">
+            <span>总量</span>
+            <strong><span id="totalVolume">0</span> 千克</strong>
+          </div>
+          <div class="day-total-item">
+            <span>距离</span>
+            <strong><span id="totalDistance">0</span> km</strong>
+          </div>
+          <div class="day-total-item">
+            <span>有氧时长</span>
+            <strong><span id="totalCardioTime">0</span> 分钟</strong>
+          </div>
+          <div class="day-total-item">
+            <span>总消耗热量</span>
+            <strong><span id="totalCalories">0</span> kcal</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="notes-panel">
+        <label class="field wide">
+          <span>训练感受</span>
+          <textarea id="sessionNotes" rows="4" placeholder="状态、疼痛、不适、下次调整..."></textarea>
+        </label>
+      </section>
+
+      <section class="history-panel">
+        <div class="section-title">
+          <h2>历史</h2>
+          <div class="actions">
+            <button id="exportCsv" class="text-button" type="button">导出当天</button>
+            <button id="exportJson" class="text-button" type="button">备份全部</button>
+          </div>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="customExerciseModal" hidden>
+    <form class="modal-sheet" id="customExerciseForm">
+      <h2 id="exerciseModalTitle">新增动作</h2>
+      <label class="field wide">
+        <span>动作名称</span>
+        <input id="customExerciseName" autocomplete="off" placeholder="例如：绳索夹胸">
+      </label>
+      <label class="field wide">
+        <span>所属板块</span>
+        <select id="customExerciseTemplate">
+          <option value="push">胸肩</option>
+          <option value="pull">背臂</option>
+          <option value="legs">腿臀</option>
+          <option value="cardio">有氧</option>
+        </select>
+      </label>
+      <fieldset class="choice-field">
+        <legend>重量记录方式</legend>
+        <label>
+          <input type="radio" name="exerciseMultiplier" value="1" checked>
+          <span>双手/器械，按填写重量计算</span>
+        </label>
+        <label>
+          <input type="radio" name="exerciseMultiplier" value="2">
+          <span>单手重量，总量自动 ×2</span>
+        </label>
+      </fieldset>
+      <div class="modal-actions">
+        <button class="text-button" id="cancelCustomExercise" type="button">取消</button>
+        <button class="primary-button" type="submit">添加</button>
+      </div>
+    </form>
+  </div>
+
+  <template id="exerciseTemplate">
+    <article class="exercise-card">
+      <div class="exercise-head">
+        <input class="exercise-name" aria-label="动作名称">
+        <button class="icon-button small remove-exercise" type="button" title="删除动作">×</button>
+      </div>
+      <div class="set-labels">
+        <span>重量/速度</span>
+        <span>次数/距离</span>
+        <span>组数/时长</span>
+        <span>总量</span>
+      </div>
+      <div class="sets"></div>
+      <button class="add-set" type="button">+ 加一组</button>
+    </article>
+  </template>
+
+  <template id="setTemplate">
+    <div class="set-row">
+      <input class="set-weight" inputmode="decimal" placeholder="kg">
+      <input class="set-reps" inputmode="decimal" placeholder="次">
+      <input class="set-count" inputmode="decimal" placeholder="组">
+      <output class="set-volume">0</output>
+      <button class="icon-button tiny remove-set" type="button" title="删除这一组">×</button>
+    </div>
+  </template>
+
+  <script src="app.js?v=20260617-25"></script>
+</body>
+</html>
