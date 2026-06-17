@@ -56,6 +56,8 @@ const els = {
   addCustomExercise: document.querySelector("#addCustomExercise"),
   clearDay: document.querySelector("#clearDay"),
   exportCsv: document.querySelector("#exportCsv"),
+  importJson: document.querySelector("#importJson"),
+  importJsonFile: document.querySelector("#importJsonFile"),
   exportJson: document.querySelector("#exportJson"),
   installButton: document.querySelector("#installButton"),
   customExerciseModal: document.querySelector("#customExerciseModal"),
@@ -151,6 +153,8 @@ function bindEvents() {
   });
 
   els.exportCsv.addEventListener("click", exportCurrentCsv);
+  els.importJson.addEventListener("click", () => els.importJsonFile.click());
+  els.importJsonFile.addEventListener("change", importJsonBackup);
   els.exportJson.addEventListener("click", exportAllJson);
 
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -774,6 +778,50 @@ function exportAllJson() {
   downloadText(`健身记录备份-${todayKey()}.json`, JSON.stringify(state.records, null, 2), "application/json;charset=utf-8");
 }
 
+function importJsonBackup(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const incoming = JSON.parse(String(reader.result || "{}"));
+      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) {
+        throw new Error("Invalid backup");
+      }
+
+      const dates = Object.keys(incoming).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date));
+      if (!dates.length) throw new Error("No records");
+
+      if (!confirm(`导入 ${dates.length} 天历史记录？同日期会用备份文件覆盖当前记录。`)) return;
+
+      dates.forEach((date) => {
+        state.records[date] = normalizeImportedRecord(date, incoming[date]);
+      });
+      saveRecords();
+      renderAll();
+      alert("导入完成");
+    } catch {
+      alert("导入失败。请选择“备份全部”导出的 JSON 文件。");
+    } finally {
+      event.target.value = "";
+    }
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+function normalizeImportedRecord(date, record) {
+  const fallback = blankRecord(date);
+  if (!record || typeof record !== "object") return fallback;
+  return {
+    date,
+    type: record.type || fallback.type,
+    bodyWeight: record.bodyWeight || fallback.bodyWeight,
+    notes: record.notes || "",
+    exercises: Array.isArray(record.exercises) ? record.exercises : []
+  };
+}
+
 function toCsvRow(row) {
   return row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",");
 }
@@ -784,8 +832,14 @@ function downloadText(filename, text, type) {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  link.rel = "noopener";
+  link.style.display = "none";
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 function escapeHtml(value) {

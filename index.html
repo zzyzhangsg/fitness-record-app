@@ -7,7 +7,7 @@
   <title>健身记录</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260617-26">
+  <link rel="stylesheet" href="styles.css?v=20260617-28">
 </head>
 <body>
   <div class="app-shell">
@@ -120,7 +120,9 @@
           <h2>历史</h2>
           <div class="actions">
             <button id="exportCsv" class="text-button" type="button">导出当天</button>
+            <button id="importJson" class="text-button" type="button">导入备份</button>
             <button id="exportJson" class="text-button" type="button">备份全部</button>
+            <input id="importJsonFile" type="file" accept="application/json,.json" hidden>
           </div>
         </div>
         <div id="historyList" class="history-list"></div>
@@ -189,6 +191,6 @@
     </div>
   </template>
 
-  <script src="app.js?v=20260617-26"></script>
+  <script src="app.js?v=20260617-28"></script>
 </body>
 </html>
