@@ -168,6 +168,93 @@ main {
   line-height: 1;
 }
 
+.calendar-popover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 15;
+  width: 260px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(20, 35, 28, 0.18);
+}
+
+.calendar-popover[hidden] {
+  display: none;
+}
+
+.calendar-head {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.calendar-head strong {
+  text-align: center;
+}
+
+.calendar-head button,
+.calendar-day {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.calendar-head button {
+  min-height: 32px;
+  border-radius: 8px;
+  font-size: 22px;
+}
+
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-weekdays {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.calendar-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.calendar-day.muted {
+  color: #9aa59f;
+}
+
+.calendar-day.selected {
+  background: var(--green);
+  color: #fff;
+}
+
+.calendar-day i {
+  position: absolute;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--amber);
+}
+
+.calendar-day.selected i {
+  background: #fff;
+}
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus,
@@ -450,13 +537,21 @@ main {
 
 .history-item {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto 32px;
   gap: 10px;
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfa;
   padding: 10px;
+}
+
+.history-open {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
 }
 
 .history-item strong {

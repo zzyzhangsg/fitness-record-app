@@ -7,7 +7,7 @@
   <title>健身记录</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260617-25">
+  <link rel="stylesheet" href="styles.css?v=20260617-26">
 </head>
 <body>
   <div class="app-shell">
@@ -29,8 +29,9 @@
         <label class="field">
           <span>日期</span>
           <div class="date-row">
-            <input id="recordDate" type="date">
+            <input id="recordDate" type="text" readonly>
             <span id="weekdayLabel" class="weekday-label">周三</span>
+            <div id="calendarPopover" class="calendar-popover" hidden></div>
           </div>
         </label>
         <label class="field">
@@ -188,6 +189,6 @@
     </div>
   </template>
 
-  <script src="app.js?v=20260617-25"></script>
+  <script src="app.js?v=20260617-26"></script>
 </body>
 </html>

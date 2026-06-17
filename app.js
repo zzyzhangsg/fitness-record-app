@@ -31,6 +31,7 @@ const state = {
   activeTemplate: "push",
   editingQuickActions: false,
   saveTimer: null,
+  calendarMonth: todayKey().slice(0, 7),
   deferredInstall: null
 };
 
@@ -38,6 +39,7 @@ const els = {
   saveState: document.querySelector("#saveState"),
   recordDate: document.querySelector("#recordDate"),
   weekdayLabel: document.querySelector("#weekdayLabel"),
+  calendarPopover: document.querySelector("#calendarPopover"),
   sessionType: document.querySelector("#sessionType"),
   bodyWeight: document.querySelector("#bodyWeight"),
   dailyVolume: document.querySelector("#dailyVolume"),
@@ -80,10 +82,16 @@ function init() {
 }
 
 function bindEvents() {
-  els.recordDate.addEventListener("change", () => {
-    state.activeDate = els.recordDate.value || todayKey();
-    ensureRecord(state.activeDate);
-    renderAll();
+  els.recordDate.addEventListener("click", () => {
+    state.calendarMonth = state.activeDate.slice(0, 7);
+    renderCalendar();
+    els.calendarPopover.hidden = false;
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".date-row")) {
+      els.calendarPopover.hidden = true;
+    }
   });
 
   els.sessionType.addEventListener("change", () => updateCurrent({ type: els.sessionType.value }));
@@ -199,7 +207,7 @@ function setSelectedExerciseMultiplier(multiplier) {
 
 function renderAll() {
   const record = currentRecord();
-  els.recordDate.value = state.activeDate;
+  els.recordDate.value = formatDateForDisplay(state.activeDate);
   els.weekdayLabel.textContent = weekdayText(state.activeDate);
   els.sessionType.value = record.type || "胸肩";
   els.bodyWeight.value = record.bodyWeight || "";
@@ -208,6 +216,59 @@ function renderAll() {
   renderExercises();
   renderTotals();
   renderHistory();
+}
+
+function renderCalendar() {
+  const [year, month] = state.calendarMonth.split("-").map(Number);
+  const first = new Date(year, month - 1, 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+  const monthLabel = `${year}年${String(month).padStart(2, "0")}月`;
+  const days = [];
+
+  for (let i = 0; i < 42; i += 1) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    const key = dateKey(date);
+    const inMonth = date.getMonth() === month - 1;
+    const selected = key === state.activeDate;
+    const hasRecord = recordHasContent(state.records[key]);
+    days.push(`
+      <button class="calendar-day ${inMonth ? "" : "muted"} ${selected ? "selected" : ""}" data-date="${key}" type="button">
+        <span>${date.getDate()}</span>
+        ${hasRecord ? '<i aria-hidden="true"></i>' : ""}
+      </button>
+    `);
+  }
+
+  els.calendarPopover.innerHTML = `
+    <div class="calendar-head">
+      <button type="button" data-calendar-nav="-1">‹</button>
+      <strong>${monthLabel}</strong>
+      <button type="button" data-calendar-nav="1">›</button>
+    </div>
+    <div class="calendar-weekdays">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div class="calendar-days">${days.join("")}</div>
+  `;
+
+  els.calendarPopover.querySelectorAll("[data-calendar-nav]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const next = new Date(year, month - 1 + Number(button.dataset.calendarNav), 1);
+      state.calendarMonth = dateKey(next).slice(0, 7);
+      renderCalendar();
+    });
+  });
+
+  els.calendarPopover.querySelectorAll("[data-date]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeDate = button.dataset.date;
+      ensureRecord(state.activeDate);
+      els.calendarPopover.hidden = true;
+      renderAll();
+    });
+  });
 }
 
 function renderQuickActions() {
@@ -434,7 +495,7 @@ function renderTotals() {
 
 function renderHistory() {
   const entries = Object.values(state.records)
-    .filter((record) => record.exercises.length || record.notes || record.bodyWeight)
+    .filter(recordHasContent)
     .sort((a, b) => b.date.localeCompare(a.date));
 
   els.historyList.innerHTML = "";
@@ -448,20 +509,27 @@ function renderHistory() {
   }
 
   entries.forEach((record) => {
-    const item = document.createElement("button");
-    item.type = "button";
+    const item = document.createElement("div");
     item.className = "history-item";
     item.innerHTML = `
-      <span>
+      <button class="history-open" type="button">
         <strong>${escapeHtml(record.date)} ${escapeHtml(record.type || "")}</strong>
         <span class="history-meta">${record.exercises.length} 个动作</span>
-      </span>
+      </button>
       <span class="history-volume">${formatNumber(recordVolume(record))}</span>
+      <button class="icon-button tiny history-delete" type="button" title="删除这天历史">×</button>
     `;
-    item.addEventListener("click", () => {
+    item.querySelector(".history-open").addEventListener("click", () => {
       state.activeDate = record.date;
       renderAll();
       window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    item.querySelector(".history-delete").addEventListener("click", () => {
+      if (!confirm(`删除 ${record.date} 的历史记录？`)) return;
+      delete state.records[record.date];
+      saveRecords();
+      if (state.activeDate === record.date) ensureRecord(state.activeDate);
+      renderAll();
     });
     els.historyList.append(item);
   });
@@ -660,10 +728,24 @@ function todayKey() {
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
 
+function dateKey(date) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function formatDateForDisplay(dateText) {
+  return dateText ? dateText.replaceAll("-", "/") : "";
+}
+
 function weekdayText(dateText) {
   const date = new Date(`${dateText}T00:00:00`);
   if (Number.isNaN(date.getTime())) return "";
   return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][date.getDay()];
+}
+
+function recordHasContent(record) {
+  if (!record) return false;
+  return Boolean(record.exercises?.length || String(record.notes || "").trim());
 }
 
 function exportCurrentCsv() {
