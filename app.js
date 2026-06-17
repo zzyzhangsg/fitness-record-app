@@ -55,7 +55,6 @@ const els = {
   editQuickActions: document.querySelector("#editQuickActions"),
   addCustomExercise: document.querySelector("#addCustomExercise"),
   clearDay: document.querySelector("#clearDay"),
-  exportCsv: document.querySelector("#exportCsv"),
   importJson: document.querySelector("#importJson"),
   importJsonFile: document.querySelector("#importJsonFile"),
   exportJson: document.querySelector("#exportJson"),
@@ -152,7 +151,6 @@ function bindEvents() {
     renderAll();
   });
 
-  els.exportCsv.addEventListener("click", exportCurrentCsv);
   els.importJson.addEventListener("click", () => els.importJsonFile.click());
   els.importJsonFile.addEventListener("change", importJsonBackup);
   els.exportJson.addEventListener("click", exportAllJson);
@@ -752,28 +750,6 @@ function recordHasContent(record) {
   return Boolean(record.exercises?.length || String(record.notes || "").trim());
 }
 
-function exportCurrentCsv() {
-  const record = currentRecord();
-  const rows = [["日期", "训练类型", "体重", "动作", "重量/速度", "次数/距离", "组数/时长", "总量"]];
-
-  record.exercises.forEach((exercise) => {
-    exercise.sets.forEach((set) => {
-      rows.push([
-        record.date,
-        record.type || "",
-        record.bodyWeight || "",
-        exercise.name || "",
-        set.weight || "",
-        set.reps || "",
-        set.count || "",
-        isCardioExercise(exercise) ? "" : formatNumber(setVolume(set, exercise))
-      ]);
-    });
-  });
-
-  downloadText(`${record.date}-健身记录.csv`, rows.map(toCsvRow).join("\n"), "text/csv;charset=utf-8");
-}
-
 function exportAllJson() {
   downloadText(`健身记录备份-${todayKey()}.json`, JSON.stringify(state.records, null, 2), "application/json;charset=utf-8");
 }
@@ -820,10 +796,6 @@ function normalizeImportedRecord(date, record) {
     notes: record.notes || "",
     exercises: Array.isArray(record.exercises) ? record.exercises : []
   };
-}
-
-function toCsvRow(row) {
-  return row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",");
 }
 
 function downloadText(filename, text, type) {
